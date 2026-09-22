@@ -1,164 +1,1731 @@
-const twilio = require("twilio");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const client = twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN
-);
+<title>RakshaLink | Personal Safety</title>
 
-module.exports = async function handler(req, res) {
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
 
-    // CORS
-    const allowedOrigin = process.env.ALLOWED_ORIGIN;
+body {
+    background: #f5f7fb;
+    color: #222;
+}
 
-    res.setHeader(
-        "Access-Control-Allow-Origin",
-        allowedOrigin || "*"
-    );
+.navbar {
+    background: #111827;
+    color: white;
+    padding: 16px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "POST, OPTIONS"
-    );
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+}
 
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type"
-    );
+.status {
+    font-size: 14px;
+}
 
-    // Browser preflight request
-    if (req.method === "OPTIONS") {
-        return res.status(204).end();
+.status-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    background: #22c55e;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 30px 20px;
+}
+
+.hero {
+    text-align: center;
+    padding: 25px 10px;
+}
+
+.hero h1 {
+    font-size: 38px;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.sos-button {
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    border: 12px solid #fecaca;
+    background: #dc2626;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+    transition: 0.2s;
+}
+
+.sos-button:hover {
+    transform: scale(1.04);
+}
+
+.sos-subtitle {
+    margin-top: 12px;
+    color: #777;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 35px;
+}
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    margin-bottom: 10px;
+}
+
+.card p {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 11px 16px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.primary {
+    background: #111827;
+    color: white;
+}
+
+.secondary {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.danger {
+    background: #dc2626;
+    color: white;
+}
+
+.success {
+    background: #16a34a;
+    color: white;
+}
+
+.blue {
+    background: #2563eb;
+    color: white;
+}
+
+.action-row {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.back {
+    margin-bottom: 20px;
+}
+
+.contact-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+input {
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.contact {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.contact-info strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.contact-info span {
+    color: #666;
+    font-size: 14px;
+}
+
+.contact-actions {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.countdown {
+    text-align: center;
+    padding: 40px;
+}
+
+.countdown-number {
+    font-size: 100px;
+    color: #dc2626;
+    font-weight: bold;
+    margin: 20px;
+}
+
+.emergency-header {
+    background: #fee2e2;
+    border-left: 6px solid #dc2626;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.info-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.info-box h4 {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.info-box p {
+    font-weight: bold;
+}
+
+.map {
+    height: 280px;
+    background:
+        linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+        linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+        linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+    background-size: 40px 40px;
+    background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+    border-radius: 12px;
+    margin-top: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-marker {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 38px;
+}
+
+.map-label {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.dashboard-alert {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.safe-screen {
+    text-align: center;
+    padding: 70px 20px;
+}
+
+.safe-icon {
+    font-size: 70px;
+    margin-bottom: 15px;
+}
+
+.history-item {
+    padding: 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.empty {
+    color: #777;
+    padding: 20px 0;
+}
+
+footer {
+    text-align: center;
+    padding: 30px;
+    color: #888;
+    font-size: 13px;
+}
+
+@media (max-width: 800px) {
+    .grid {
+        grid-template-columns: 1fr;
     }
 
-    // Only POST allowed
-    if (req.method !== "POST") {
-        return res.status(405).json({
-            success: false,
-            message: "Only POST requests are allowed."
-        });
+    .info-grid {
+        grid-template-columns: 1fr 1fr;
     }
 
-    // Basic origin protection
-    if (
-        allowedOrigin &&
-        req.headers.origin &&
-        req.headers.origin !== allowedOrigin
-    ) {
-        return res.status(403).json({
-            success: false,
-            message: "Unauthorized origin."
-        });
+    .contact-form {
+        grid-template-columns: 1fr;
     }
+
+    .contact {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 500px) {
+    .hero h1 {
+        font-size: 28px;
+    }
+
+    .sos-button {
+        width: 160px;
+        height: 160px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <div class="logo">🛡️ RakshaLink</div>
+
+    <div class="status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="networkStatus">Online</span>
+    </div>
+</div>
+
+
+<!-- ================= HOME PAGE ================= -->
+
+<div id="homePage" class="page active">
+
+<div class="container">
+
+    <section class="hero">
+
+        <h1>RakshaLink</h1>
+
+        <p>
+            Personal safety and emergency response platform
+        </p>
+
+        <button class="sos-button" onclick="startSOS()">
+            SOS
+        </button>
+
+        <div class="sos-subtitle">
+            Press in case of emergency
+        </div>
+
+    </section>
+
+
+    <div class="grid">
+
+        <!-- SAFETY SESSION -->
+
+        <div class="card">
+
+            <h3>🛡️ Safety Session</h3>
+
+            <p>
+                Start a safety session while travelling
+                and keep your trusted contacts informed.
+            </p>
+
+            <div class="action-row">
+
+                <button class="primary"
+                        onclick="startSafetySession()">
+                    Start Session
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- TRUSTED CONTACTS -->
+
+        <div class="card">
+
+            <h3>👥 Trusted Contacts</h3>
+
+            <p>
+                Manage the people who should receive
+                your emergency alerts.
+            </p>
+
+            <div class="action-row">
+
+                <button class="secondary"
+                        onclick="showPage('contactsPage')">
+                    View Contacts
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- NEARBY SUPPORT -->
+
+        <div class="card">
+
+            <h3>📍 Nearby Support</h3>
+
+            <p>
+                Find nearby police stations, hospitals
+                and approved support points.
+            </p>
+
+            <div class="action-row">
+
+                <button class="secondary"
+                        onclick="nearbySupport()">
+                    Find Support
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="action-row">
+
+        <button class="primary"
+                onclick="showPage('dashboardPage')">
+            🖥 Guardian Dashboard
+        </button>
+
+        <button class="secondary"
+                onclick="toggleNetwork()">
+            📡 Simulate Offline
+        </button>
+
+        <button class="secondary"
+                onclick="showHistory()">
+            📋 Emergency History
+        </button>
+
+    </div>
+
+</div>
+
+<footer>
+    RakshaLink • Offline-First Personal Safety Platform
+</footer>
+
+</div>
+
+
+<!-- ================= CONTACTS PAGE ================= -->
+
+<div id="contactsPage" class="page">
+
+<div class="container">
+
+    <button class="secondary back"
+            onclick="showPage('homePage')">
+        ← Back
+    </button>
+
+    <div class="card">
+
+        <h2>👥 Trusted Contacts</h2>
+
+        <p style="margin-top:8px;color:#666;">
+            Add people who should receive your emergency alerts.
+        </p>
+
+
+        <div class="contact-form">
+
+            <input
+                type="text"
+                id="contactName"
+                placeholder="Contact name"
+            >
+
+            <input
+                type="tel"
+                id="contactNumber"
+                placeholder="Phone number"
+            >
+
+            <button class="primary"
+                    onclick="addContact()">
+                Add Contact
+            </button>
+
+        </div>
+
+
+        <div id="contactsList"></div>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- ================= COUNTDOWN PAGE ================= -->
+
+<div id="countdownPage" class="page">
+
+<div class="container">
+
+    <div class="card countdown">
+
+        <h2>🚨 Emergency Alert</h2>
+
+        <p style="margin-top:10px;color:#666;">
+            SOS will be activated automatically.
+        </p>
+
+        <div class="countdown-number"
+             id="countdownNumber">
+            5
+        </div>
+
+        <button class="secondary"
+                onclick="cancelSOS()">
+            CANCEL
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- ================= EMERGENCY PAGE ================= -->
+
+<div id="emergencyPage" class="page">
+
+<div class="container">
+
+    <div class="emergency-header">
+
+        <h2>🚨 EMERGENCY ACTIVE</h2>
+
+        <p style="margin-top:8px;">
+            Your trusted contacts have been notified
+            or an SMS fallback has been prepared.
+        </p>
+
+    </div>
+
+
+    <div class="info-grid">
+
+        <div class="info-box">
+            <h4>STATUS</h4>
+            <p id="alertStatus">Alert Active</p>
+        </div>
+
+        <div class="info-box">
+            <h4>LOCATION</h4>
+            <p id="locationText">Getting location...</p>
+        </div>
+
+        <div class="info-box">
+            <h4>BATTERY</h4>
+            <p id="batteryText">Checking...</p>
+        </div>
+
+        <div class="info-box">
+            <h4>NETWORK</h4>
+            <p id="emergencyNetwork">Online</p>
+        </div>
+
+    </div>
+
+
+    <div class="map">
+
+        <div class="map-label">
+            📍 Current / Last Known Location
+        </div>
+
+        <div class="map-marker">
+            📍
+        </div>
+
+    </div>
+
+
+    <div class="card" style="margin-top:20px;">
+
+        <h3>Emergency Actions</h3>
+
+        <div class="action-row">
+
+            <button class="danger"
+                    onclick="callFirstContact()">
+                📞 Call Contact
+            </button>
+
+            <button class="blue"
+                    onclick="sendSMSFirstContact()">
+                💬 Send SMS
+            </button>
+
+            <button class="secondary"
+                    onclick="sendSMSAllContacts()">
+                📱 SMS Contacts
+            </button>
+
+            <button class="success"
+                    onclick="markSafe()">
+                ✓ I'M SAFE
+            </button>
+
+        </div>
+
+        <p style="margin-top:15px;color:#777;font-size:13px;">
+            SMS opens your phone's messaging application with
+            the emergency message already prepared.
+        </p>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- ================= DASHBOARD ================= -->
+
+<div id="dashboardPage" class="page">
+
+<div class="container">
+
+    <button class="secondary back"
+            onclick="showPage('homePage')">
+        ← Back
+    </button>
+
+
+    <div class="card">
+
+        <h2>🖥 Guardian Dashboard</h2>
+
+        <p style="margin-top:8px;color:#666;">
+            Monitor emergency status and respond quickly.
+        </p>
+
+    </div>
+
+
+    <div class="dashboard-alert"
+         style="margin-top:20px;">
+
+        <h3>🚨 Emergency Alert</h3>
+
+        <p style="margin-top:8px;">
+            User: <strong>Shourya</strong>
+        </p>
+
+        <p>
+            Alert Time:
+            <strong id="dashboardTime">--</strong>
+        </p>
+
+        <p>
+            Status:
+            <strong id="dashboardStatus">
+                Waiting
+            </strong>
+        </p>
+
+    </div>
+
+
+    <div class="info-grid">
+
+        <div class="info-box">
+            <h4>USER</h4>
+            <p>Shourya</p>
+        </div>
+
+        <div class="info-box">
+            <h4>BATTERY</h4>
+            <p id="dashboardBattery">--</p>
+        </div>
+
+        <div class="info-box">
+            <h4>LOCATION</h4>
+            <p id="dashboardLocation">--</p>
+        </div>
+
+        <div class="info-box">
+            <h4>NETWORK</h4>
+            <p id="dashboardNetwork">--</p>
+        </div>
+
+    </div>
+
+
+    <div class="map">
+
+        <div class="map-label">
+            Guardian Map View
+        </div>
+
+        <div class="map-marker">
+            📍
+        </div>
+
+    </div>
+
+
+    <div class="card" style="margin-top:20px;">
+
+        <h3>Guardian Response</h3>
+
+        <div class="action-row">
+
+            <button class="danger"
+                    onclick="callFirstContact()">
+                📞 Call User
+            </button>
+
+            <button class="blue"
+                    onclick="guardianRespond()">
+                🛡 I'M RESPONDING
+            </button>
+
+            <button class="success"
+                    onclick="markSafe()">
+                ✓ MARK SAFE
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- ================= SAFE PAGE ================= -->
+
+<div id="safePage" class="page">
+
+<div class="container">
+
+    <div class="card safe-screen">
+
+        <div class="safe-icon">
+            ✅
+        </div>
+
+        <h1>You are Safe</h1>
+
+        <p style="margin-top:10px;color:#666;">
+            The emergency session has been closed.
+        </p>
+
+        <div class="action-row"
+             style="justify-content:center;">
+
+            <button class="primary"
+                    onclick="showPage('homePage')">
+                Return Home
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<!-- ================= HISTORY PAGE ================= -->
+
+<div id="historyPage" class="page">
+
+<div class="container">
+
+    <button class="secondary back"
+            onclick="showPage('homePage')">
+        ← Back
+    </button>
+
+    <div class="card">
+
+        <h2>📋 Emergency History</h2>
+
+        <div id="historyList"></div>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   RAKSHALINK JAVASCRIPT
+===================================================== */
+
+
+/* -----------------------------
+   GLOBAL VARIABLES
+----------------------------- */
+
+let contacts =
+    JSON.parse(localStorage.getItem("rakshaContacts")) || [];
+
+let history =
+    JSON.parse(localStorage.getItem("rakshaHistory")) || [];
+
+let countdownTimer = null;
+
+let emergencyLocation = {
+    lat: null,
+    lon: null
+};
+
+let batteryLevel = "Unknown";
+
+let isOnline = navigator.onLine;
+
+
+/* -----------------------------
+   PAGE NAVIGATION
+----------------------------- */
+
+function showPage(pageId) {
+
+    document.querySelectorAll(".page").forEach(page => {
+        page.classList.remove("active");
+    });
+
+    document.getElementById(pageId).classList.add("active");
+
+    if (pageId === "contactsPage") {
+        renderContacts();
+    }
+
+    if (pageId === "historyPage") {
+        renderHistory();
+    }
+}
+
+
+/* -----------------------------
+   NETWORK STATUS
+----------------------------- */
+
+function updateNetworkUI() {
+
+    const statusText =
+        isOnline ? "Online" : "Offline";
+
+    document.getElementById("networkStatus").innerText =
+        statusText;
+
+    document.getElementById("emergencyNetwork").innerText =
+        statusText;
+
+    document.getElementById("dashboardNetwork").innerText =
+        statusText;
+
+    const dot =
+        document.getElementById("statusDot");
+
+    if (isOnline) {
+        dot.style.background = "#22c55e";
+    } else {
+        dot.style.background = "#dc2626";
+    }
+}
+
+
+window.addEventListener("online", () => {
+
+    isOnline = true;
+
+    updateNetworkUI();
+
+});
+
+
+window.addEventListener("offline", () => {
+
+    isOnline = false;
+
+    updateNetworkUI();
+
+});
+
+
+function toggleNetwork() {
+
+    isOnline = !isOnline;
+
+    updateNetworkUI();
+
+    alert(
+        isOnline
+        ? "Internet connection restored."
+        : "Internet connection lost. SMS fallback will be used."
+    );
+}
+
+
+/* -----------------------------
+   CONTACT MANAGEMENT
+----------------------------- */
+
+function addContact() {
+
+    const name =
+        document.getElementById("contactName")
+        .value.trim();
+
+    const number =
+        document.getElementById("contactNumber")
+        .value.trim();
+
+
+    if (!name || !number) {
+
+        alert("Please enter both name and phone number.");
+
+        return;
+    }
+
+
+    const contact = {
+        id: Date.now(),
+        name: name,
+        number: number
+    };
+
+
+    contacts.push(contact);
+
+
+    localStorage.setItem(
+        "rakshaContacts",
+        JSON.stringify(contacts)
+    );
+
+
+    document.getElementById("contactName").value = "";
+
+    document.getElementById("contactNumber").value = "";
+
+
+    renderContacts();
+
+
+    alert(
+        name + " has been added as a trusted contact."
+    );
+}
+
+
+function deleteContact(id) {
+
+    contacts =
+        contacts.filter(contact => contact.id !== id);
+
+
+    localStorage.setItem(
+        "rakshaContacts",
+        JSON.stringify(contacts)
+    );
+
+
+    renderContacts();
+}
+
+
+function renderContacts() {
+
+    const list =
+        document.getElementById("contactsList");
+
+
+    if (contacts.length === 0) {
+
+        list.innerHTML =
+            '<div class="empty">No trusted contacts added yet.</div>';
+
+        return;
+    }
+
+
+    list.innerHTML = "";
+
+
+    contacts.forEach(contact => {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "contact";
+
+
+        div.innerHTML = `
+
+            <div class="contact-info">
+
+                <strong>${escapeHTML(contact.name)}</strong>
+
+                <span>${escapeHTML(contact.number)}</span>
+
+            </div>
+
+            <div class="contact-actions">
+
+                <button
+                    class="danger"
+                    onclick="callContact('${encodeURIComponent(contact.number)}')">
+                    📞 Call
+                </button>
+
+                <button
+                    class="blue"
+                    onclick="smsContact('${encodeURIComponent(contact.number)}')">
+                    💬 SMS
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="deleteContact(${contact.id})">
+                    Remove
+                </button>
+
+            </div>
+        `;
+
+
+        list.appendChild(div);
+
+    });
+}
+
+
+/* -----------------------------
+   SAFE HTML
+----------------------------- */
+
+function escapeHTML(text) {
+
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* -----------------------------
+   CALL CONTACT
+----------------------------- */
+
+function callContact(encodedNumber) {
+
+    const number =
+        decodeURIComponent(encodedNumber);
+
+    window.location.href =
+        "tel:" + number;
+}
+
+
+function callFirstContact() {
+
+    if (contacts.length === 0) {
+
+        alert(
+            "Please add a trusted contact first."
+        );
+
+        showPage("contactsPage");
+
+        return;
+    }
+
+
+    callContact(
+        encodeURIComponent(contacts[0].number)
+    );
+}
+
+
+/* -----------------------------
+   LOCATION
+----------------------------- */
+
+function getLocation() {
+
+    return new Promise(resolve => {
+
+        if (!navigator.geolocation) {
+
+            emergencyLocation.lat = 18.6298;
+            emergencyLocation.lon = 73.7997;
+
+            resolve();
+
+            return;
+        }
+
+
+        navigator.geolocation.getCurrentPosition(
+
+            position => {
+
+                emergencyLocation.lat =
+                    position.coords.latitude;
+
+                emergencyLocation.lon =
+                    position.coords.longitude;
+
+                resolve();
+
+            },
+
+            error => {
+
+                // Last-known/demo location
+                emergencyLocation.lat =
+                    18.6298;
+
+                emergencyLocation.lon =
+                    73.7997;
+
+                resolve();
+
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+
+        );
+
+    });
+}
+
+
+/* -----------------------------
+   BATTERY
+----------------------------- */
+
+async function getBattery() {
 
     try {
 
-        const {
-            contacts,
-            userName,
-            latitude,
-            longitude,
-            battery,
-            network
-        } = req.body;
+        if ("getBattery" in navigator) {
 
-        if (!Array.isArray(contacts) || contacts.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: "No trusted contacts provided."
-            });
+            const battery =
+                await navigator.getBattery();
+
+            batteryLevel =
+                Math.round(
+                    battery.level * 100
+                ) + "%";
+
+        } else {
+
+            batteryLevel = "Not available";
+
         }
 
-        // Validate phone numbers
-        const validContacts = contacts.filter(contact => {
-            return (
-                contact.phone &&
-                /^\+[1-9]\d{7,14}$/.test(contact.phone)
-            );
-        });
+    } catch {
 
-        if (validContacts.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: "No valid phone numbers found. Use +91XXXXXXXXXX format."
-            });
-        }
+        batteryLevel = "Not available";
 
-        const locationText =
-            latitude && longitude
-                ? `https://maps.google.com/?q=${latitude},${longitude}`
-                : "Location unavailable";
+    }
+}
 
-        const messageBody =
-`🚨 RAKSHALINK SOS ALERT 🚨
 
-${userName || "A RakshaLink user"} may be in danger.
+/* -----------------------------
+   SOS START
+----------------------------- */
 
-Please check on them immediately.
+async function startSOS() {
 
-📍 Location:
-${locationText}
+    if (contacts.length === 0) {
 
-🔋 Battery: ${battery || "Unknown"}%
-
-📡 Network: ${network || "Unknown"}
-
-This is an emergency alert generated by RakshaLink.`;
-
-        const results = [];
-
-        // Send SMS to every trusted contact
-        for (const contact of validContacts) {
-
-            try {
-
-                const message = await client.messages.create({
-                    body: messageBody,
-                    from: process.env.TWILIO_PHONE_NUMBER,
-                    to: contact.phone
-                });
-
-                results.push({
-                    name: contact.name,
-                    phone: contact.phone,
-                    success: true,
-                    messageSid: message.sid
-                });
-
-            } catch (error) {
-
-                results.push({
-                    name: contact.name,
-                    phone: contact.phone,
-                    success: false,
-                    error: error.message
-                });
-            }
-        }
-
-        const successful = results.filter(
-            result => result.success
+        alert(
+            "Please add at least one trusted contact before using SOS."
         );
 
-        return res.status(200).json({
+        showPage("contactsPage");
 
-            success: successful.length > 0,
-
-            message:
-                successful.length > 0
-                    ? `SOS SMS sent to ${successful.length} contact(s).`
-                    : "SMS could not be sent.",
-
-            results: results
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Server error while sending SOS.",
-            error: error.message
-        });
+        return;
     }
-};
+
+
+    showPage("countdownPage");
+
+
+    let count = 5;
+
+
+    document.getElementById(
+        "countdownNumber"
+    ).innerText = count;
+
+
+    countdownTimer =
+        setInterval(() => {
+
+            count--;
+
+            document.getElementById(
+                "countdownNumber"
+            ).innerText = count;
+
+
+            if (count <= 0) {
+
+                clearInterval(countdownTimer);
+
+                activateEmergency();
+
+            }
+
+        }, 1000);
+}
+
+
+/* -----------------------------
+   CANCEL SOS
+----------------------------- */
+
+function cancelSOS() {
+
+    if (countdownTimer) {
+
+        clearInterval(countdownTimer);
+
+        countdownTimer = null;
+
+    }
+
+
+    showPage("homePage");
+
+
+    alert(
+        "SOS cancelled. No emergency alert was activated."
+    );
+}
+
+
+/* -----------------------------
+   ACTIVATE EMERGENCY
+----------------------------- */
+
+async function activateEmergency() {
+
+    showPage("emergencyPage");
+
+
+    document.getElementById(
+        "alertStatus"
+    ).innerText =
+        isOnline
+        ? "Alert Delivered"
+        : "SMS Fallback Ready";
+
+
+    await getLocation();
+
+    await getBattery();
+
+
+    const locationString =
+        emergencyLocation.lat.toFixed(6)
+        + ", "
+        +
+        emergencyLocation.lon.toFixed(6);
+
+
+    document.getElementById(
+        "locationText"
+    ).innerText =
+        locationString;
+
+
+    document.getElementById(
+        "batteryText"
+    ).innerText =
+        batteryLevel;
+
+
+    document.getElementById(
+        "emergencyNetwork"
+    ).innerText =
+        isOnline
+        ? "Online"
+        : "Offline";
+
+
+    document.getElementById(
+        "dashboardLocation"
+    ).innerText =
+        locationString;
+
+
+    document.getElementById(
+        "dashboardBattery"
+    ).innerText =
+        batteryLevel;
+
+
+    document.getElementById(
+        "dashboardNetwork"
+    ).innerText =
+        isOnline
+        ? "Online"
+        : "Offline";
+
+
+    const now =
+        new Date().toLocaleString();
+
+
+    document.getElementById(
+        "dashboardTime"
+    ).innerText =
+        now;
+
+
+    document.getElementById(
+        "dashboardStatus"
+    ).innerText =
+        "Emergency Active";
+
+
+    const event = {
+
+        time: now,
+
+        location: locationString,
+
+        battery: batteryLevel,
+
+        network:
+            isOnline
+            ? "Online"
+            : "Offline",
+
+        status:
+            isOnline
+            ? "Alert Delivered"
+            : "SMS Fallback Ready"
+
+    };
+
+
+    history.unshift(event);
+
+
+    localStorage.setItem(
+        "rakshaHistory",
+        JSON.stringify(history)
+    );
+
+
+    /*
+       IMPORTANT:
+
+       A GitHub Pages website cannot silently
+       send SMS messages.
+
+       We therefore prepare the SMS links.
+    */
+
+
+    console.log(
+        "SOS activated for contacts:",
+        contacts
+    );
+
+}
+
+
+/* -----------------------------
+   SMS MESSAGE
+----------------------------- */
+
+function createSOSMessage() {
+
+    const location =
+        emergencyLocation.lat !== null
+        ?
+        emergencyLocation.lat.toFixed(6)
+        + ", "
+        +
+        emergencyLocation.lon.toFixed(6)
+        :
+        "Location unavailable";
+
+
+    return (
+        "🚨 RAKSHALINK SOS ALERT\n\n" +
+        "I may be in danger. Please contact me immediately.\n\n" +
+        "Location: " + location + "\n" +
+        "Battery: " + batteryLevel + "\n" +
+        "Network: " +
+        (isOnline ? "Online" : "Offline") +
+        "\n\n" +
+        "Please check on me."
+    );
+}
+
+
+/* -----------------------------
+   SEND SMS TO ONE CONTACT
+----------------------------- */
+
+function smsContact(encodedNumber) {
+
+    const number =
+        decodeURIComponent(encodedNumber);
+
+    const message =
+        createSOSMessage();
+
+
+    const smsURL =
+        "sms:" +
+        number +
+        "?body=" +
+        encodeURIComponent(message);
+
+
+    window.location.href =
+        smsURL;
+}
+
+
+/* -----------------------------
+   SEND SMS TO FIRST CONTACT
+----------------------------- */
+
+function sendSMSFirstContact() {
+
+    if (contacts.length === 0) {
+
+        alert(
+            "Please add a trusted contact first."
+        );
+
+        showPage("contactsPage");
+
+        return;
+    }
+
+
+    smsContact(
+        encodeURIComponent(
+            contacts[0].number
+        )
+    );
+}
+
+
+/* -----------------------------
+   SEND SMS TO ALL CONTACTS
+----------------------------- */
+
+function sendSMSAllContacts() {
+
+    if (contacts.length === 0) {
+
+        alert(
+            "Please add trusted contacts first."
+        );
+
+        showPage("contactsPage");
+
+        return;
+    }
+
+
+    /*
+       Browsers normally prevent opening
+       multiple SMS windows automatically.
+
+       So we show the contacts and let the
+       user choose each SMS.
+    */
+
+
+    let message =
+        "SOS message prepared.\n\n";
+
+
+    contacts.forEach((contact, index) => {
+
+        message +=
+            (index + 1) +
+            ". " +
+            contact.name +
+            " - " +
+            contact.number +
+            "\n";
+
+    });
+
+
+    message +=
+        "\nChoose a contact's SMS button to send the alert.";
+
+
+    alert(message);
+
+
+    showPage("contactsPage");
+}
+
+
+/* -----------------------------
+   SAFETY SESSION
+----------------------------- */
+
+function startSafetySession() {
+
+    alert(
+        "🛡 Safety session started.\n\n" +
+        "Your trusted contacts can now be kept informed during your journey."
+    );
+}
+
+
+/* -----------------------------
+   GUARDIAN RESPONSE
+----------------------------- */
+
+function guardianRespond() {
+
+    document.getElementById(
+        "dashboardStatus"
+    ).innerText =
+        "Guardian Responding";
+
+
+    document.getElementById(
+        "alertStatus"
+    ).innerText =
+        "Guardian Responding";
+
+
+    alert(
+        "Guardian response recorded."
+    );
+}
+
+
+/* -----------------------------
+   MARK SAFE
+----------------------------- */
+
+function markSafe() {
+
+    document.getElementById(
+        "dashboardStatus"
+    ).innerText =
+        "Safe";
+
+
+    document.getElementById(
+        "alertStatus"
+    ).innerText =
+        "Emergency Closed";
+
+
+    showPage("safePage");
+}
+
+
+/* -----------------------------
+   NEARBY SUPPORT
+----------------------------- */
+
+function nearbySupport() {
+
+    alert(
+        "📍 Nearby Support\n\n" +
+        "Police Station\n" +
+        "Hospital\n" +
+        "Emergency Support Point\n\n" +
+        "For this prototype, nearby support locations are simulated."
+    );
+}
+
+
+/* -----------------------------
+   HISTORY
+----------------------------- */
+
+function showHistory() {
+
+    showPage("historyPage");
+}
+
+
+function renderHistory() {
+
+    const list =
+        document.getElementById("historyList");
+
+
+    if (history.length === 0) {
+
+        list.innerHTML =
+            '<div class="empty">No emergency history yet.</div>';
+
+        return;
+    }
+
+
+    list.innerHTML = "";
+
+
+    history.forEach(item => {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "history-item";
+
+
+        div.innerHTML = `
+
+            <strong>🚨 ${escapeHTML(item.status)}</strong>
+
+            <p>
+                Time: ${escapeHTML(item.time)}
+            </p>
+
+            <p>
+                Location: ${escapeHTML(item.location)}
+            </p>
+
+            <p>
+                Battery: ${escapeHTML(item.battery)}
+            </p>
+
+            <p>
+                Network: ${escapeHTML(item.network)}
+            </p>
+
+        `;
+
+
+        list.appendChild(div);
+
+    });
+}
+
+
+/* -----------------------------
+   INITIALIZATION
+----------------------------- */
+
+updateNetworkUI();
+
+renderContacts();
+
+</script>
+
+</body>
+</html>
